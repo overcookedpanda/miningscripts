@@ -1,0 +1,28 @@
+#!/bin/bash
+   D_IDS=$(nvidia-smi --query-gpu=pci.sub_device_id --format=csv,noheader,nounits)
+   i=0
+   echo -e "${C}${B}------------------------------------------------------------------------ GPU LIST ------------------------------------------------------------------------${N}"
+   echo -e "${N}${C}${Y}ID${N}\t${R}VENDOR${N}\t\t${R}MODEL${N}\t\t\t${C}PSTATE${N}\t${B}TEMP${N}\t${C}FAN${N}\t${B}UTILIZATION${N}\t${C}GPUCLOCK${N}\t${B}MEMCLOCK${N}\t${C}POWER${N}\t${B}POWERLIMIT${N}\t${C}MAXPOWER${N}"
+   echo -e "${C}${B}----------------------------------------------------------------------------------------------------------------------------------------------------------${N}"
+   for ID in $D_IDS
+   do
+      V_ID=${ID:6:5}
+      case $V_ID in
+         3842) V_ID="EVGA\t";;
+         1462) V_ID="MSI\t";;
+         10DE) V_ID="NVIDIA\t";;
+         19DA) V_ID="ZOTAC\t";;
+         807D|1043) V_ID="ASUS\t";;
+         1458) V_ID="GIGABYTE";;
+         196E) V_ID="PNY\t";;
+         1569) V_ID="PALIT\t";;
+      esac
+
+      { IFS=', ' read PSTATE CURRENT_TEMP CURRENT_FAN UTILIZATION PWRLIMIT POWERDRAW; } < <(nvidia-smi -i $i --query-gpu=pstate,temperature.gpu,fan.speed,utilization.gpu,power.limit,power.draw --format=csv,noheader,nounits)
+      MODEL=$(nvidia-smi -i $i --query-gpu=name --format=csv,noheader,nounits | tail -1)
+      POWERMAX=$(nvidia-smi -i $i -q|grep "Max Power"|cut -f 2 -d ":"|cut -f 2 -d " ")
+      GPUCLOCK=$(nvidia-smi -i $i -q -d CLOCK |grep Graphics |head -1|cut -f 2 -d ":"|cut -f 2 -d " ")
+      MEMCLOCK=$(nvidia-smi -i $i -q -d CLOCK |grep Memory |head -1|cut -f 2 -d ":"|cut -f 2 -d " ")
+echo -e "${N}${C}${Y}$i${N}\t${R}$V_ID${N}\t${R}$MODEL${N}\t${C}$PSTATE${N}\t${B}$CURRENT_TEMP${N}\t${C}$CURRENT_FAN${N}\t${B}$UTILIZATION${N}\t\t${C}$GPUCLOCK${N}\t\t${B}$MEMCLOCK${N}\t\t${C}$POWERDRAW${N}\t${B}$PWRLIMIT${N}\t\t${C}$POWERMAX${N}"
+      i=$(($i + 1))
+   done
